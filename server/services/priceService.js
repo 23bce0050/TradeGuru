@@ -1,11 +1,12 @@
 import YahooFinance from "yahoo-finance2";
-import NodeCache from "node-cache";
+import { createCache } from "./cache.js";
 
 const yf = new YahooFinance({ suppressNotices: ["yahooSurvey"] });
 
-// Cache: price 30 sec, search 1 din, chart 10 min
-// (Yahoo ko baar-baar hit karne se rate-limit lagta hai)
-const cache = new NodeCache();
+// Cache: price 30 sec, search 1 din, chart 10 min (Yahoo ko baar-baar hit karne se rate-limit lagta hai).
+// Ek saath aayi same requests ek hi Yahoo call share karti hain (cache.js).
+const priceCache = createCache();
+export const priceStats = () => priceCache.stats();
 const TTL = { quote: 30, search: 86400, chart: 600 };
 
 // "reliance" -> "RELIANCE.NS" (agar exchange suffix nahi diya toh NSE maan lo)
@@ -15,13 +16,7 @@ export function toYahooSymbol(symbol) {
   return s.includes(".") ? s : `${s}.NS`;
 }
 
-async function cached(key, ttl, fn) {
-  const hit = cache.get(key);
-  if (hit !== undefined) return hit;
-  const value = await fn();
-  cache.set(key, value, ttl);
-  return value;
-}
+const cached = (key, ttl, fn) => priceCache.memo(key, ttl, fn);
 
 export function getQuote(symbol) {
   const sym = toYahooSymbol(symbol);

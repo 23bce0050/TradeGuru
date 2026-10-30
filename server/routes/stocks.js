@@ -14,7 +14,8 @@ router.get("/:symbol/quote", async (req, res) => {
   try {
     res.json(await getQuote(req.params.symbol));
   } catch (err) {
-    res.status(404).json({ message: `Stock nahi mila: ${req.params.symbol}`, detail: err.message });
+    console.error("[quote]", req.params.symbol, err.message);
+    res.status(404).json({ message: `We couldn’t find a stock called ${req.params.symbol.toUpperCase()}.` });
   }
 });
 
@@ -23,7 +24,8 @@ router.get("/:symbol/chart", async (req, res) => {
   try {
     res.json({ symbol: req.params.symbol, points: await getChart(req.params.symbol, req.query.range) });
   } catch (err) {
-    res.status(404).json({ message: "Chart data nahi mila", detail: err.message });
+    console.error("[chart]", req.params.symbol, err.message);
+    res.status(404).json({ message: "Chart isn’t available for this stock right now." });
   }
 });
 
